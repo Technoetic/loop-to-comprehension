@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loop → Comprehension</title>
+  <style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #e2e8f0;
+  font-family: 'Noto Sans KR', 'JetBrains Mono', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Container */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.header h1 {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.how-to {
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.how-to strong {
+  color: #60a5fa;
+}
+
+/* Pattern Tabs */
+.pattern-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border: 1px solid #2d2d44;
+  border-radius: 20px;
+  background: transparent;
+  color: #e2e8f0;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  border-color: #3b82f6;
+  color: #60a5fa;
+}
+
+.tab-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.tab-btn.locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+  color: #64748b;
+}
+
+/* Card */
+.card {
+  background: #1a1a2e;
+  border: 1px solid #2d2d44;
+  border-radius: 12px;
+  padding: 20px 16px;
+  margin-bottom: 20px;
+}
+
+.card-label {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+/* Parts Area */
+.parts-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* Part Chip */
+.part-chip {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  cursor: grab;
+  font-size: 12px;
+  font-weight: 500;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+}
+
+.part-chip:hover {
+  transform: translateY(-2px);
+}
+
+.part-chip:active {
+  cursor: grabbing;
+}
+
+.part-chip.used {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.part-chip.is-init {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+/* Part Chip Colors */
+.part-chip.expr {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.part-chip.keyExpr {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.part-chip.forClause {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.part-chip.ifClause {
+  background: #ede9fe;
+  border-color: #8b5cf6;
+  color: #5b21b6;
+}
+
+.part-chip.init {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #4b5563;
+}
+
+/* Comprehension Builder */
+.comprehension-builder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  min-height: 60px;
+}
+
+/* Slot */
+.slot {
+  min-height: 44px;
+  border: 2px dashed #2d2d44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.slot:hover {
+  border-color: #60a5fa;
+  transform: scale(1.02);
+}
+
+.slot.filled {
+  border-style: solid;
+  border-color: #3b82f6;
+}
+
+.slot.correct {
+  animation: correctPulse 0.6s ease-in-out;
+  border-color: #10b981;
+  border-style: solid;
+}
+
+.slot-placeholder {
+  color: #64748b;
+  font-size: 11px;
+  font-family: 'Noto Sans KR', sans-serif;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Wrapper Text */
+.wrapper-text {
+  color: #64748b;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Success Box */
+.success-box {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  color: #d1fae5;
+  font-size: 13px;
+  animation: celebrateIn 0.4s ease-out;
+}
+
+/* Success Rules */
+.success-rules {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #a7f3d0;
+}
+
+.success-rules code {
+  background: rgba(255,255,255,0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Hint Box */
+.hint-box {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  color: #93c5fd;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Action Button */
+.action-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #3b82f6;
+  color: #60a5fa;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+  margin-top: 12px;
+}
+
+.action-btn:hover {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.action-btn:active {
+  transform: scale(0.98);
+}
+
+.btn-next {
+  border-color: #10b981;
+  color: #10b981;
+  margin-top: 16px;
+  font-size: 13px;
+  padding: 10px 20px;
+}
+
+.btn-next:hover {
+  background: #10b981;
+  color: #ffffff;
+}
+
+/* Legend */
+.legend {
+  margin-top: 30px;
+  padding: 20px;
+  background: #1a1a2e;
+  border: 1px solid #2d2d44;
+  border-radius: 12px;
+}
+
+.legend h3 {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.legend-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-dot.expr {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+}
+
+.legend-dot.keyExpr {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+}
+
+.legend-dot.forClause {
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+}
+
+.legend-dot.ifClause {
+  background: #ede9fe;
+  border: 1px solid #8b5cf6;
+}
+
+.legend-dot.init {
+  background: #f3f4f6;
+  border: 1px solid #9ca3af;
+}
+
+/* Wrong Feedback */
+.wrong-feedback {
+  padding: 10px 16px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* Animations */
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.wrong-shake {
+  animation: wrongShake 0.45s ease-in-out;
+}
+
+@keyframes correctPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes celebrateIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2d2d44;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .card {
+    padding: 16px 12px;
+  }
+
+  .comprehension-builder {
+    gap: 4px;
+  }
+
+  .slot {
+    min-width: 80px;
+    min-height: 40px;
+  }
+
+  .action-btn {
+    margin-top: 8px;
+    margin-right: 4px;
+  }
+
+  .legend-items {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 12px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+  }
+
+  .header p {
+    font-size: 11px;
+  }
+
+  .pattern-tabs {
+    gap: 6px;
+  }
+
+  .tab-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .card {
+    padding: 12px 8px;
+    margin-bottom: 16px;
+  }
+
+  .card-label {
+    margin-bottom: 8px;
+  }
+
+  .parts-area {
+    gap: 6px;
+  }
+
+  .part-chip {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .comprehension-builder {
+    gap: 3px;
+    padding: 8px;
+    min-height: 50px;
+  }
+
+  .slot {
+    min-width: 60px;
+    min-height: 36px;
+  }
+
+  .slot-placeholder {
+    font-size: 10px;
+  }
+
+  .wrapper-text {
+    font-size: 11px;
+  }
+
+  .action-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .legend {
+    margin-top: 20px;
+    padding: 16px;
+  }
+
+  .legend h3 {
+    margin-bottom: 12px;
+  }
+
+  .legend-item {
+    gap: 6px;
+    font-size: 11px;
+  }
+}
+</style>
+</head>
+<body>
+  <main class="container" id="app">
+
+    <!-- Header -->
+    <div class="header">
+      <h1 class="title">Loop → Comprehension</h1>
+      <p class="subtitle">for 루프를 한 줄 컴프리헨션으로 바꾸는 연습</p>
+      <p class="how-to">아래 코드 조각을 <strong>클릭</strong>하거나 <strong>드래그</strong>해서 빈 슬롯에 순서대로 채워보세요</p>
+    </div>
+
+    <!-- Pattern Tabs -->
+    <div class="pattern-tabs" id="pattern-tabs">
+      <!-- JS로 렌더링 -->
+    </div>
+
+    <!-- Loop Code Display -->
+    <div class="card">
+      <div class="card-label">원본 For 루프</div>
+      <pre id="loop-code" class="loop-code-block"></pre>
+    </div>
+
+    <!-- Draggable Parts -->
+    <div class="card" id="parts-card">
+      <div class="card-label">코드 조각들 — 클릭하거나 드래그하여 배치</div>
+      <div class="parts-area" id="parts-area"></div>
+    </div>
+
+    <!-- Comprehension Builder -->
+    <div class="card" id="builder-card">
+      <div class="card-label" id="builder-label">리스트 컴프리헨션 조립</div>
+      <div class="comprehension-builder" id="builder-area"></div>
+    </div>
+
+    <!-- Wrong Feedback -->
+    <div id="wrong-feedback" style="display:none" class="wrong-feedback">순서가 틀렸습니다. 다시 배치해 보세요!</div>
+
+    <!-- Success Message -->
+    <div id="success-area" style="display:none"></div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="action-btn btn-reset" id="btn-reset">↺ 초기화</button>
+      <button class="action-btn btn-hint" id="btn-hint">💡 힌트 보기</button>
+    </div>
+
+    <!-- Hint Area -->
+    <div id="hint-area"></div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-label">색상 범례</div>
+      <div class="legend-items">
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span>표현식</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>for절</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div><span>if절</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9ca3af"></div><span>제거됨</span></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>const PATTERNS = [
+  {
+    id: 1, name: "① List Comprehension", korName: "리스트 컴프리헨션",
+    category: "comprehension", difficulty: 1,
+    wrapperOpen: "[", wrapperClose: "]",
+    loop: `result = []\nfor x in items:\n    result.append(x * 2)`,
+    parts: { init: "result = []", expr: "x * 2", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `result = [x * 2 for x in items]`,
+    hint: "래퍼 [  ] 안에 표현식을 먼저, 그 다음 for문을 넣으세요.",
+    explanation: "리스트를 만들면서 각 요소를 변환합니다."
+  },
+  {
+    id: 2, name: "② Set Comprehension", korName: "셋 컴프리헨션",
+    category: "comprehension", difficulty: 1,
+    wrapperOpen: "{", wrapperClose: "}",
+    loop: `result = set()\nfor x in items:\n    result.add(x)`,
+    parts: { init: "result = set()", expr: "x", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `result = {x for x in items}`,
+    hint: "래퍼 {  } 안에 표현식을 먼저, 그 다음 for문을 넣으세요.",
+    explanation: "집합을 만들어 중복을 자동으로 제거합니다."
+  },
+  {
+    id: 3, name: "③ Dict Comprehension", korName: "딕셔너리 컴프리헨션",
+    category: "comprehension", difficulty: 2,
+    wrapperOpen: "{", wrapperClose: "}",
+    isDict: true,
+    loop: `result = {}\nfor k, v in pairs:\n    result[k] = v`,
+    parts: { init: "result = {}", keyExpr: "k", expr: "v", forClause: "for k, v in pairs" },
+    slotOrder: ["keyExpr", "expr", "forClause"],
+    slotLabels: ["키표현식", "값표현식", "for절"],
+    compExample: `result = {k: v for k, v in pairs}`,
+    hint: "래퍼 { : } 안에 키, 값, for문 순서로 넣으세요.",
+    explanation: "딕셔너리를 만들면서 키-값 쌍을 변환합니다."
+  },
+  {
+    id: 4, name: "④ sum() 합계", korName: "합계",
+    category: "generator", difficulty: 1,
+    wrapperOpen: "sum(", wrapperClose: ")",
+    loop: `total = 0\nfor x in items:\n    total += x`,
+    parts: { init: "total = 0", expr: "x", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `total = sum(x for x in items)`,
+    hint: "sum(  ) 안에 표현식과 for문을 넣으세요.",
+    explanation: "모든 요소의 합계를 계산합니다."
+  },
+  {
+    id: 5, name: '⑤ "".join() 결합', korName: "문자열 결합",
+    category: "generator", difficulty: 2,
+    wrapperOpen: '"".join(', wrapperClose: ")",
+    loop: `result = ""\nfor x in items:\n    result += x`,
+    parts: { init: 'result = ""', expr: "x", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `result = "".join(x for x in items)`,
+    hint: 'join(  ) 안에 표현식과 for문을 넣으세요.',
+    explanation: "여러 문자열을 구분자 없이 합칩니다."
+  },
+  {
+    id: 6, name: "⑥ math.prod() 곱", korName: "곱셈",
+    category: "generator", difficulty: 2,
+    wrapperOpen: "math.prod(", wrapperClose: ")",
+    loop: `total = 1\nfor x in items:\n    total *= x`,
+    parts: { init: "total = 1", expr: "x", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `total = math.prod(x for x in items)`,
+    hint: "math.prod(  ) 안에 표현식과 for문을 넣으세요.",
+    explanation: "모든 요소의 곱을 계산합니다."
+  },
+  {
+    id: 7, name: "⑦ min() 최솟값", korName: "최솟값",
+    category: "generator", difficulty: 2,
+    wrapperOpen: "min(", wrapperClose: ")",
+    loop: `val = float('inf')\nfor x in items:\n    val = min(val, x)`,
+    parts: { init: "val = float('inf')", expr: "x", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `val = min(x for x in items)`,
+    hint: "min(  ) 안에 표현식과 for문을 넣으세요.",
+    explanation: "가장 작은 값을 찾습니다."
+  },
+  {
+    id: 8, name: "⑧ max() 최댓값", korName: "최댓값",
+    category: "generator", difficulty: 2,
+    wrapperOpen: "max(", wrapperClose: ")",
+    loop: `val = float('-inf')\nfor x in items:\n    val = max(val, x)`,
+    parts: { init: "val = float('-inf')", expr: "x", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `val = max(x for x in items)`,
+    hint: "max(  ) 안에 표현식과 for문을 넣으세요.",
+    explanation: "가장 큰 값을 찾습니다."
+  },
+  {
+    id: 9, name: "⑨ all() 모두 참", korName: "모두 참",
+    category: "generator", difficulty: 2,
+    wrapperOpen: "all(", wrapperClose: ")",
+    loop: `flag = True\nfor x in items:\n    flag = flag and (x > 0)`,
+    parts: { init: "flag = True", expr: "x > 0", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["조건식", "for절"],
+    compExample: `flag = all(x > 0 for x in items)`,
+    hint: "all(  ) 안에 조건식과 for문을 넣으세요.",
+    explanation: "모든 요소가 조건을 만족하는지 확인합니다."
+  },
+  {
+    id: 10, name: "⑩ any() 하나라도 참", korName: "하나라도 참",
+    category: "generator", difficulty: 2,
+    wrapperOpen: "any(", wrapperClose: ")",
+    loop: `flag = False\nfor x in items:\n    flag = flag or (x > 2)`,
+    parts: { init: "flag = False", expr: "x > 2", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["조건식", "for절"],
+    compExample: `flag = any(x > 2 for x in items)`,
+    hint: "any(  ) 안에 조건식과 for문을 넣으세요.",
+    explanation: "어떤 요소가 조건을 만족하는지 확인합니다."
+  },
+  {
+    id: 11, name: "⑪ tuple() 튜플", korName: "튜플",
+    category: "generator", difficulty: 1,
+    wrapperOpen: "tuple(", wrapperClose: ")",
+    loop: `result = ()\nfor x in items:\n    result += (x,)`,
+    parts: { init: "result = ()", expr: "x", forClause: "for x in items" },
+    slotOrder: ["expr", "forClause"],
+    slotLabels: ["표현식", "for절"],
+    compExample: `result = tuple(x for x in items)`,
+    hint: "tuple(  ) 안에 표현식과 for문을 넣으세요.",
+    explanation: "튜플을 생성합니다."
+  },
+];
+
+class PatternManager {
+  constructor() {
+    this.patterns = PATTERNS;
+    this.currentId = 1;
+  }
+
+  getAll() {
+    return this.patterns;
+  }
+
+  getById(id) {
+    return this.patterns.find(p => p.id === id);
+  }
+
+  getCurrent() {
+    return this.getById(this.currentId);
+  }
+
+  setCurrent(id) {
+    this.currentId = id;
+  }
+
+  getNext() {
+    const next = this.currentId < 11 ? this.currentId + 1 : 1;
+    return this.getById(next);
+  }
+
+  getPrev() {
+    const prev = this.currentId > 1 ? this.currentId - 1 : 11;
+    return this.getById(prev);
+  }
+}
+
+// 전역 인스턴스
+const patternManager = new PatternManager();
+</script>
+  <script>const PART_COLORS = {
+  expr:       { bg: '#fef3c7', border: '#f59e0b', text: '#92400e', glow: 'rgba(245,158,11,0.3)' },
+  keyExpr:    { bg: '#fef3c7', border: '#f59e0b', text: '#92400e', glow: 'rgba(245,158,11,0.3)' },
+  forClause:  { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af', glow: 'rgba(59,130,246,0.3)' },
+  ifClause:   { bg: '#ede9fe', border: '#8b5cf6', text: '#5b21b6', glow: 'rgba(139,92,246,0.3)' },
+  init:       { bg: '#f3f4f6', border: '#9ca3af', text: '#4b5563', glow: 'rgba(156,163,175,0.3)' },
+};
+
+class UIRenderer {
+  constructor() {
+    this.root = document.getElementById('app');
+  }
+
+  render(state) {
+    const pattern = state.getCurrentPattern();
+    if (!pattern) return;
+    this.renderTabs(state, patternManager.getAll());
+    this.renderLoopCode(state, pattern);
+    this.renderParts(state, pattern);
+    this.renderBuilder(state, pattern);
+    this.renderSuccess(state, pattern);
+    this.renderHint(state, pattern);
+  }
+
+  renderTabs(state, patterns) {
+    const container = document.getElementById('pattern-tabs');
+    if (!container) return;
+    container.innerHTML = patterns.map(p => {
+      const unlocked = state.unlockedPatterns ? state.unlockedPatterns.has(p.id) : true;
+      const isActive = state.currentPatternId === p.id;
+      return `<button
+        class="tab-btn ${isActive ? 'active' : ''} ${!unlocked ? 'locked' : ''}"
+        data-pattern-id="${p.id}"
+        ${!unlocked ? 'disabled' : ''}
+        title="${!unlocked ? '이전 패턴을 완료하면 열립니다' : p.name}"
+      >${unlocked ? p.name : '🔒 ' + p.name}</button>`;
+    }).join('');
+  }
+
+  renderLoopCode(state, pattern) {
+    const container = document.getElementById('loop-code');
+    if (!container) return;
+    const lines = pattern.loop.split('\n');
+    container.innerHTML = lines.map(line => {
+      const partKey = this.getLinePartKey(line, pattern);
+      const isHighlighted = state.highlightPart && partKey === state.highlightPart;
+      const colors = partKey ? PART_COLORS[partKey] : null;
+      return `<div class="code-line ${isHighlighted ? 'highlighted' : ''}"
+        style="${isHighlighted && colors ? `background:${colors.bg}33;border-left:3px solid ${colors.border}` : 'border-left:3px solid transparent'}"
+        data-part-key="${partKey || ''}"
+      ><code style="color:${isHighlighted && colors ? colors.border : '#c9d1d9'}">${this.escapeHtml(line)}</code></div>`;
+    }).join('');
+  }
+
+  getLinePartKey(line, pattern) {
+    const trimmed = line.trim();
+    for (const [key, val] of Object.entries(pattern.parts)) {
+      if (key === 'init') continue;
+      if (val && trimmed.includes(val)) return key;
+    }
+    return null;
+  }
+
+  renderParts(state, pattern) {
+    const container = document.getElementById('parts-area');
+    if (!container) return;
+    const usedParts = state.slots.filter(Boolean);
+    container.innerHTML = Object.entries(pattern.parts).map(([key, val]) => {
+      if (!val) return '';
+      const colors = PART_COLORS[key] || PART_COLORS.init;
+      const isUsed = usedParts.includes(key);
+      const isInit = key === 'init';
+      return `<div
+        class="part-chip ${isUsed ? 'used' : ''} ${isInit ? 'is-init' : ''}"
+        data-part-key="${key}"
+        draggable="${!isInit && !isUsed}"
+        style="background:${colors.bg};border-color:${colors.border};color:${colors.text};${!isUsed && !isInit ? `box-shadow:0 2px 12px ${colors.glow}` : ''}"
+      >${isInit ? `<s>${this.escapeHtml(val)}</s><span class="init-label">← [ ] 가 대체</span>` : this.escapeHtml(val)}</div>`;
+    }).join('');
+  }
+
+  renderBuilder(state, pattern) {
+    const card = document.getElementById('builder-card');
+    if (card) card.style.display = state.completed ? 'none' : '';
+    const container = document.getElementById('builder-area');
+    if (!container) return;
+
+    // 레이블 동적 업데이트
+    const label = document.getElementById('builder-label');
+    if (label) {
+      if (state.completed) {
+        label.textContent = '✓ 완성!';
+        label.style.color = '#10b981';
+      } else {
+        const labelMap = {
+          1: '리스트 컴프리헨션 조립', 2: '셋 컴프리헨션 조립',
+          3: '딕셔너리 컴프리헨션 조립', 4: 'sum() 조립',
+          5: '"".join() 조립', 6: 'math.prod() 조립',
+          7: 'min() 조립', 8: 'max() 조립',
+          9: 'all() 조립', 10: 'any() 조립', 11: 'tuple() 조립',
+        };
+        label.textContent = labelMap[pattern.id] || '컴프리헨션 조립';
+        label.style.color = '';
+      }
+    }
+
+    const isDict = pattern.isDict;
+    let slotsHtml = '';
+    if (isDict) {
+      slotsHtml = this.renderDictSlots(state, pattern);
+    } else {
+      slotsHtml = state.slots.map((slotVal, idx) => {
+        return this.renderSlot(state, pattern, idx, slotVal);
+      }).join('<span class="slot-separator"> </span>');
+    }
+
+    container.innerHTML = `
+      <span class="wrapper-text">${this.escapeHtml(pattern.wrapperOpen)}</span>
+      ${slotsHtml}
+      <span class="wrapper-text">${this.escapeHtml(pattern.wrapperClose)}</span>
+    `;
+    container.className = `comprehension-builder ${state.completed ? 'completed' : ''}`;
+  }
+
+  renderSlot(state, pattern, idx, slotVal) {
+    const filled = slotVal !== null;
+    const colors = filled ? (PART_COLORS[slotVal] || PART_COLORS.init) : null;
+    const slotLabels = pattern.slotLabels || ['표현식', 'for절', '조건절'];
+    return `<div
+      class="slot ${filled ? 'filled' : ''} ${state.completed ? 'correct' : ''}"
+      data-slot-idx="${idx}"
+      style="${filled ? `border-color:${colors.border};background:${colors.bg}` : 'border-color:#475569;background:rgba(30,41,59,0.5)'}"
+    >${filled
+        ? `<span style="color:${colors.text};font-weight:500">${this.escapeHtml(pattern.parts[slotVal])}</span>`
+        : `<span class="slot-placeholder">${slotLabels[Math.min(idx, 2)]}</span>`
+    }</div>`;
+  }
+
+  renderDictSlots(state, pattern) {
+    const keyVal = state.slots[0];
+    const exprVal = state.slots[1];
+    const forVal = state.slots[2];
+
+    const keySlot = this.renderSlot(state, pattern, 0, keyVal);
+    const exprSlot = this.renderSlot(state, pattern, 1, exprVal);
+    const forSlot = this.renderSlot(state, pattern, 2, forVal);
+
+    return `${keySlot}<span class="wrapper-text">:</span>${exprSlot} ${forSlot}`;
+  }
+
+  renderSuccess(state, pattern) {
+    const container = document.getElementById('success-area');
+    if (!container) return;
+    // 성공 시 오답 메시지 숨김
+    const wrongFeedback = document.getElementById('wrong-feedback');
+    if (wrongFeedback) wrongFeedback.style.display = 'none';
+    // 성공 시 코드 조각 카드 숨김
+    const partsCard = document.getElementById('parts-card');
+    if (partsCard) partsCard.style.display = state.completed ? 'none' : '';
+    if (!state.completed) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+      return;
+    }
+    container.style.display = 'block';
+    const answerStr = pattern.wrapperOpen +
+      (pattern.isDict
+        ? `${pattern.parts.keyExpr}: ${pattern.parts.expr} ${pattern.parts.forClause}`
+        : pattern.slotOrder.map(k => pattern.parts[k]).join(' ')
+      ) + pattern.wrapperClose;
+    const isLast = pattern.id === 11;
+    const rules = this._getHintRules(pattern);
+    container.innerHTML = `
+      <div class="success-box celebrate">
+        <div class="success-title">🎉 정확합니다!</div>
+        <code class="success-code">${this.escapeHtml(answerStr)}</code>
+        <div class="success-desc">${this.escapeHtml(pattern.explanation)}</div>
+        <div class="success-rules"><strong>✏️ 변환 규칙:</strong><br>${rules}</div>
+        <button class="action-btn btn-next" id="btn-next">
+          ${isLast ? '🔄 처음으로' : '다음 패턴 →'}
+        </button>
+      </div>
+    `;
+  }
+
+  renderHint(state, pattern) {
+    const btn = document.getElementById('btn-hint');
+    if (btn) {
+      btn.textContent = state.showHint ? '힌트 숨기기' : '💡 힌트 보기';
+      btn.style.display = state.completed ? 'none' : '';
+    }
+    const container = document.getElementById('hint-area');
+    if (!container) return;
+    if (!state.showHint || state.completed) {
+      container.innerHTML = '';
+      return;
+    }
+    const rules = this._getHintRules(pattern);
+    container.innerHTML = `
+      <div class="hint-box">
+        <strong>💡 힌트:</strong> ${this.escapeHtml(pattern.hint)}<br><br>
+        <strong>변환 규칙:</strong><br>
+        ${rules}
+      </div>
+    `;
+  }
+
+  _getHintRules(pattern) {
+    if (pattern.isDict) {
+      return `1️⃣ <code>result[k] = v</code>의 키 → 콜론 앞에<br>
+        2️⃣ <code>result[k] = v</code>의 값 → 콜론 뒤에<br>
+        3️⃣ <code>for</code>절 → 그대로<br>
+        4️⃣ <code>result = {}</code> → <code>{ : }</code>가 대체`;
+    }
+    if (pattern.category === 'comprehension') {
+      return `1️⃣ 루프 안 표현식 → 맨 앞으로<br>
+        2️⃣ <code>for</code>절 → 그대로<br>
+        3️⃣ <code>if</code>절 → 맨 뒤로 (있을 경우)<br>
+        4️⃣ <code>${this.escapeHtml(pattern.parts.init)}</code> → 래퍼가 대체`;
+    }
+    if (pattern.id === 9 || pattern.id === 10) {
+      return `1️⃣ 루프 안 조건식 → 맨 앞으로<br>
+        2️⃣ <code>for</code>절 → 그대로<br>
+        3️⃣ <code>${this.escapeHtml(pattern.parts.init)}</code> → <code>${this.escapeHtml(pattern.wrapperOpen + '...' + pattern.wrapperClose)}</code>가 대체`;
+    }
+    // generator 계열 (sum, join, prod, min, max, tuple)
+    return `1️⃣ 루프 안 표현식 → 맨 앞으로<br>
+      2️⃣ <code>for</code>절 → 그대로<br>
+      3️⃣ <code>${this.escapeHtml(pattern.parts.init)}</code> → <code>${this.escapeHtml(pattern.wrapperOpen + '...' + pattern.wrapperClose)}</code>가 대체`;
+  }
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+}
+
+const uiRenderer = new UIRenderer();
+</script>
+  <script>// AppState 클래스: 전체 앱 상태 관리
+class AppState {
+  constructor() {
+    this.currentPatternId = 1;
+    this.slots = [];
+    this.dragItem = null;
+    this.completed = false;
+    this.showHint = false;
+    this.highlightPart = null;
+    this.attemptCount = 0;
+    this.unlockedPatterns = new Set([1]); // 처음엔 1번만 잠금 해제
+  }
+
+  setPattern(id) {
+    this.currentPatternId = id;
+    const pattern = patternManager.getById(id);
+    this.slots = new Array(pattern.slotOrder.length).fill(null);
+    this.completed = false;
+    this.showHint = false;
+    this.highlightPart = null;
+    this.attemptCount = 0;
+  }
+
+  reset() {
+    const pattern = patternManager.getById(this.currentPatternId);
+    this.slots = new Array(pattern.slotOrder.length).fill(null);
+    this.completed = false;
+    this.showHint = false;
+    this.highlightPart = null;
+  }
+
+  getCurrentPattern() {
+    return patternManager.getById(this.currentPatternId);
+  }
+
+  isSlotFull() {
+    return this.slots.every(s => s !== null);
+  }
+}
+
+// SlotManager 클래스: 슬롯 조작 관리
+class SlotManager {
+  constructor(state) {
+    this.state = state;
+  }
+
+  dropToSlot(slotIdx, partKey) {
+    if (this.state.completed) return false;
+    const slots = [...this.state.slots];
+    const existingIdx = slots.indexOf(partKey);
+    if (existingIdx !== -1) slots[existingIdx] = null;
+    const displaced = slots[slotIdx];
+    slots[slotIdx] = partKey;
+    this.state.slots = slots;
+    return displaced;
+  }
+
+  clickPart(partKey) {
+    if (this.state.completed) return false;
+    const pattern = this.state.getCurrentPattern();
+    if (partKey === 'init') return false;
+    const slots = [...this.state.slots];
+    const existingIdx = slots.indexOf(partKey);
+    if (existingIdx !== -1) {
+      slots[existingIdx] = null;
+      this.state.slots = slots;
+      return 'removed';
+    }
+    const emptyIdx = slots.findIndex(s => s === null);
+    if (emptyIdx !== -1) {
+      slots[emptyIdx] = partKey;
+      this.state.slots = slots;
+      return 'placed';
+    }
+    return false;
+  }
+
+  clickSlot(slotIdx) {
+    if (this.state.completed) return;
+    const slots = [...this.state.slots];
+    slots[slotIdx] = null;
+    this.state.slots = slots;
+  }
+
+  checkAnswer() {
+    const pattern = this.state.getCurrentPattern();
+    const { slots } = this.state;
+    if (slots.some(s => s === null)) return false;
+    this.state.attemptCount++;
+    const correct = pattern.slotOrder.every((key, i) => slots[i] === key);
+    if (correct) {
+      this.state.completed = true;
+      // 다음 패턴 잠금 해제
+      const nextId = pattern.id < 11 ? pattern.id + 1 : 1;
+      this.state.unlockedPatterns.add(nextId);
+    }
+    return correct;
+  }
+}
+
+// App 클래스: 메인 컨트롤러
+class App {
+  constructor() {
+    this.state = new AppState();
+    this.slotManager = new SlotManager(this.state);
+  }
+
+  init() {
+    this.state.setPattern(1);
+    this.render();
+    this.bindEvents();
+  }
+
+  selectPattern(id) {
+    this.state.setPattern(id);
+    this.render();
+  }
+
+  handlePartClick(partKey) {
+    const result = this.slotManager.clickPart(partKey);
+    if (result === 'placed') {
+      if (this.state.isSlotFull()) {
+        const correct = this.slotManager.checkAnswer();
+        if (!correct) this._showWrongFeedback();
+      }
+    }
+    this.render();
+  }
+
+  handleSlotClick(slotIdx) {
+    this.slotManager.clickSlot(slotIdx);
+    this.render();
+  }
+
+  handleDragStart(partKey) {
+    this.state.dragItem = partKey;
+    this._dragging = true;
+  }
+
+  handleDrop(slotIdx) {
+    if (!this.state.dragItem) return;
+    this._dragging = false;
+    this.slotManager.dropToSlot(slotIdx, this.state.dragItem);
+    this.state.dragItem = null;
+    if (this.state.isSlotFull()) {
+      const correct = this.slotManager.checkAnswer();
+      if (!correct) this._showWrongFeedback();
+    }
+    this.render();
+  }
+
+  handleDragEnd() {
+    this.state.dragItem = null;
+    this._dragging = false;
+  }
+
+  _showWrongFeedback() {
+    setTimeout(() => {
+      const builder = document.getElementById('builder-area');
+      if (builder) {
+        builder.classList.add('wrong-shake');
+        setTimeout(() => builder.classList.remove('wrong-shake'), 500);
+      }
+      const feedback = document.getElementById('wrong-feedback');
+      if (feedback) {
+        feedback.style.display = 'block';
+        setTimeout(() => { feedback.style.display = 'none'; }, 2000);
+      }
+    }, 0);
+  }
+
+  reset() {
+    this.state.reset();
+    this.render();
+  }
+
+  nextPattern() {
+    const next = patternManager.getNext();
+    this.selectPattern(next.id);
+  }
+
+  toggleHint() {
+    this.state.showHint = !this.state.showHint;
+    this.render();
+  }
+
+  setHighlight(partKey) {
+    this.state.highlightPart = partKey;
+    this._updateHighlight(partKey);
+  }
+
+  _updateHighlight(partKey) {
+    const pattern = this.state.getCurrentPattern();
+    const lines = document.querySelectorAll('#loop-code .code-line');
+    lines.forEach(line => {
+      const lk = line.dataset.partKey;
+      const colors = lk && typeof PART_COLORS !== 'undefined' ? PART_COLORS[lk] : null;
+      if (partKey && lk === partKey && colors) {
+        line.classList.add('highlighted');
+        line.style.background = colors.bg + '33';
+        line.style.borderLeft = `3px solid ${colors.border}`;
+        line.querySelector('code').style.color = colors.border;
+      } else {
+        line.classList.remove('highlighted');
+        line.style.background = '';
+        line.style.borderLeft = '3px solid transparent';
+        if (line.querySelector('code')) line.querySelector('code').style.color = '#c9d1d9';
+      }
+    });
+  }
+
+  render() {
+    if (typeof uiRenderer !== 'undefined') {
+      uiRenderer.render(this.state);
+    }
+  }
+
+  bindEvents() {
+    document.addEventListener('click', (e) => {
+      const partChip = e.target.closest('[data-part-key]');
+      const slot = e.target.closest('[data-slot-idx]');
+      const tabBtn = e.target.closest('[data-pattern-id]');
+      const resetBtn = e.target.closest('#btn-reset');
+      const hintBtn = e.target.closest('#btn-hint');
+      const nextBtn = e.target.closest('#btn-next');
+
+      if (partChip) {
+        this.handlePartClick(partChip.dataset.partKey);
+      } else if (slot) {
+        this.handleSlotClick(parseInt(slot.dataset.slotIdx));
+      } else if (tabBtn) {
+        this.selectPattern(parseInt(tabBtn.dataset.patternId));
+      } else if (resetBtn) {
+        this.reset();
+      } else if (hintBtn) {
+        this.toggleHint();
+      } else if (nextBtn) {
+        this.nextPattern();
+      }
+    });
+
+    document.addEventListener('dragstart', (e) => {
+      const chip = e.target.closest('[data-part-key]');
+      if (chip) this.handleDragStart(chip.dataset.partKey);
+    });
+
+    document.addEventListener('dragend', () => this.handleDragEnd());
+
+    document.addEventListener('dragover', (e) => {
+      const slot = e.target.closest('[data-slot-idx]');
+      if (slot) {
+        e.preventDefault();
+        slot.classList.add('hovered');
+      }
+    });
+
+    document.addEventListener('dragleave', (e) => {
+      const slot = e.target.closest('[data-slot-idx]');
+      if (slot) slot.classList.remove('hovered');
+    });
+
+    document.addEventListener('drop', (e) => {
+      const slot = e.target.closest('[data-slot-idx]');
+      if (slot) {
+        e.preventDefault();
+        slot.classList.remove('hovered');
+        this.handleDrop(parseInt(slot.dataset.slotIdx));
+      }
+    });
+
+    document.addEventListener('mouseover', (e) => {
+      const chip = e.target.closest('[data-part-key]');
+      if (chip && chip.dataset.partKey !== 'init') {
+        this.state.highlightPart = chip.dataset.partKey;
+        this._updateHighlight(chip.dataset.partKey);
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      const chip = e.target.closest('[data-part-key]');
+      if (chip) {
+        this.state.highlightPart = null;
+        this._updateHighlight(null);
+      }
+    });
+  }
+}
+
+// 전역 인스턴스
+const app = new App();
+
+// DOM 로드 후 초기화
+document.addEventListener('DOMContentLoaded', () => {
+  app.init();
+});
+</script>
+</body>
+</html>
